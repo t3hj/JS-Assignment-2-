@@ -90,7 +90,7 @@ function gameLoop() {
     }
  
     // Story ended: offer another game
-    const endingText = (currentRoom === "escape") ? "THE END: YOU ESCAPED!" : "THE END: GAME OVER";
+    const endingText = (currentRoom === "escape") ? "THE END: YOU ESCAPED!" : "THE END: YOU ESCAPED";
     if (askRestart(endingText)) {
         startGame(true);
     } else {
