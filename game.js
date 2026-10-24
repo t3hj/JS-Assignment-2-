@@ -13,6 +13,8 @@ let inventory = {
 let wizardSatisfied = false;
 let robotsDefeated = false;
 let moves = 0;
+let justEntered = true; // true right after arriving, so descriptions show only on arrival
+let visited = {}; // rooms the player has already seen (so descriptions are not repeated)
 let endedByCancel = false;
  
 // --- AI Psychological Taunts ---
@@ -31,6 +33,8 @@ function startGame(isReplay) {
     wizardSatisfied = false;
     robotsDefeated = false;
     moves = 0;
+    visited = {};
+    justEntered = true;
     endedByCancel = false;
  
     // Instructions before play begins (only on the first game, not on replays)
@@ -139,11 +143,34 @@ function travelTo(destination) {
  
     moves++;
  
-    const taunt = aiTaunts[destination] || "AI Broadcast: 'Running won't save you.'";
+    // The AI taunt only appears the first time you reach a place.
+    // Patrol warnings always appear, because they matter for survival.
+    const taunt = visited[destination]
+        ? ""
+        : (aiTaunts[destination] || "AI Broadcast: 'Running won't save you.'");
     const warning = patrolWarning();
-    showMessage(warning ? taunt + "\n\n" + warning : taunt);
+    const message = [taunt, warning].filter(Boolean).join("\n\n");
+    if (message) {
+        showMessage(message);
+    }
  
     currentRoom = destination;
+    justEntered = true;
+}
+ 
+// --- Helper: Full room description the first time, short reminder after that ---
+function roomStory(room, fullText, shortText) {
+    // Menu reappearing in the same room (after a search, a trade, a failed hack...): no description
+    if (!justEntered) {
+        return "";
+    }
+    justEntered = false;
+ 
+    if (visited[room]) {
+        return shortText;
+    }
+    visited[room] = true;
+    return fullText;
 }
  
 function patrolWarning() {
@@ -160,8 +187,14 @@ function patrolWarning() {
 // --- Room Handlers ---
  
 function handleApartment() {
-    const story = "You are barricaded inside your dim apartment complex. Outside, the mechanical hum of killer patrol robots echoes through the streets. You need to venture out to find a way to escape this fortress.";
-    console.log("Story: " + story);
+    const story = roomStory(
+        "apartment",
+        "You are barricaded inside your dim apartment complex. Outside, the mechanical hum of killer patrol robots echoes through the streets. You need to venture out to find a way to escape this fortress.",
+        "You are back in your apartment, the safe zone. Where to next?"
+    );
+    if (story) {
+        console.log("Story: " + story);
+    }
  
     const choice = askChoice(story, [
         { id: "church", label: "The Church" },
@@ -185,14 +218,23 @@ function handleApartment() {
 }
  
 function handleChurch() {
-    let story = "You step into the gothic, towering arches of the ancient church. Standing near the altar is an eccentric surviving Wizard, murmuring arcane tech-chants while gripping a glowing staff.\n\n";
+    // Description and the Wizard's clue show on arrival only
+    let story = roomStory(
+        "church",
+        "You step into the gothic, towering arches of the ancient church. Standing near the altar is an eccentric surviving Wizard, murmuring arcane tech-chants while gripping a glowing staff.\n\n",
+        "You are back in the church. The Wizard stands by the altar.\n\n"
+    );
  
-    if (!wizardSatisfied) {
+    if (story === "") {
+        // Already in the church: the Wizard's reply to your last action was shown already
+    } else if (!wizardSatisfied) {
         story += "The Wizard speaks: 'Halt, traveler! The Evil AI blocks all escape routes. I hold the sacred AI Override Code, but I give no clues or items until an item is exchanged! Bring me weapons from the mall so I can defend this sanctuary.'";
     } else {
         story += "The Wizard smiles: 'You have brought power to the sanctuary. The path is open to you.'";
     }
-    console.log("Story: " + story);
+    if (story) {
+        console.log("Story: " + story);
+    }
  
     const options = [{ id: "apartment", label: "Return to Apartment Complex" }];
     if (wizardSatisfied) {
@@ -226,11 +268,21 @@ function handleChurch() {
 function handleLibrary() {
     let story;
     if (robotsDefeated) {
-        story = "The shattered remains of the patrol squad smoke in the center aisle. The library is eerily quiet now, and the towering bookshelves stretch into darkness.";
+        story = roomStory(
+            "library",
+            "The shattered remains of the patrol squad smoke in the center aisle. The library is eerily quiet now, and the towering bookshelves stretch into darkness.",
+            "The library is quiet. The robots' smoking remains lie in the aisle."
+        );
     } else {
-        story = "Rows upon rows of towering bookshelves stretch into darkness. In the center aisle, a squad of patrol robots suddenly blocks your path! The air is thick with tension.";
+        story = roomStory(
+            "library",
+            "Rows upon rows of towering bookshelves stretch into darkness. In the center aisle, a squad of patrol robots suddenly blocks your path! The air is thick with tension.",
+            "The patrol robots still block the center aisle, weapons ready."
+        );
     }
-    console.log("Story: " + story);
+    if (story) {
+        console.log("Story: " + story);
+    }
  
     const options = [
         { id: "apartment", label: "Return to Apartment Complex" },
@@ -282,8 +334,14 @@ function handleLibrary() {
 }
  
 function handleMall() {
-    const story = "The abandoned shopping mall is a cavernous labyrinth of shattered glass, flickering neon signs, and heavy robot patrol footprints.";
-    console.log("Story: " + story);
+    const story = roomStory(
+        "mall",
+        "The abandoned shopping mall is a cavernous labyrinth of shattered glass, flickering neon signs, and heavy robot patrol footprints.",
+        "You are back in the abandoned mall, glass crunching underfoot."
+    );
+    if (story) {
+        console.log("Story: " + story);
+    }
  
     const choice = askChoice(story, [
         { id: "apartment", label: "Return to Apartment Complex" },
@@ -407,7 +465,7 @@ function askChoice(sceneText, options, statusLine) {
  
     const message =
         (statusLine ? statusLine + "\n\n" : "") +
-        sceneText + "\n\n" +
+        (sceneText ? sceneText + "\n\n" : "") +
         "WHAT DO YOU DO?\n" +
         list + "\n\n" +
         "Type the number or the name of your choice. Click Cancel to exit.";
@@ -461,7 +519,7 @@ function askRestart(endingText) {
         endingText + "\n\n" +
         "Play again?\n" +
         "OK = start a new game (all progress is reset)\n" +
-        "Cancel = Exit the game"
+        "Cancel = quit"
     );
 }
  
