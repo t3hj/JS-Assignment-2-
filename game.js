@@ -461,7 +461,7 @@ function askRestart(endingText) {
         endingText + "\n\n" +
         "Play again?\n" +
         "OK = start a new game (all progress is reset)\n" +
-        "Cancel = quit"
+        "Cancel = Exit the game"
     );
 }
  
