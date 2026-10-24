@@ -90,11 +90,14 @@ function gameLoop() {
     }
  
     // Story ended: offer another game
-    const endingText = (currentRoom === "escape") ? "THE END: YOU ESCAPED!" : "THE END: YOU ESCAPED";
+    const won = (currentRoom === "escape");
+    const endingText = won
+        ? "YOU ESCAPED! You beat the Evil AI and made it out alive."
+        : "GAME OVER. The Evil AI wins this time.";
     if (askRestart(endingText)) {
         startGame(true);
     } else {
-        endGameSafely();
+        endGameSafely(won);
     }
 }
  
@@ -465,8 +468,12 @@ function askRestart(endingText) {
 /**
  * Message shown when the player cancels or declines to restart.
  */
-function endGameSafely() {
-    showMessage("Game ended. Thanks for playing! Refresh the page any time to play again.");
+function endGameSafely(won) {
+    if (won) {
+        showMessage("Congratulations on your escape, and thanks for playing! Refresh the page any time to play again.");
+    } else {
+        showMessage("Game ended. Thanks for playing! Refresh the page any time to play again.");
+    }
 }
  
  
