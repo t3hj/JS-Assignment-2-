@@ -24,12 +24,12 @@ Developed as an advanced JavaScript assignment featuring modular functions, stat
    ```bash
    git clone https://github.com/t3hj/JS-Assignment-2-.git
    ```
-2. Open your browser console **before** launching the game (Press `F12` or right-click -> `Inspect` -> `Console`).
-3. Open `index.html` in any web browser.
-4. Follow the pop-up prompts and read the console narrative to survive the purge and escape the Evil AI!
+2. Open `index.html` in a browser. The page intentionally stays blank.
+3. Read the welcome dialogs; they explain how to play and how to open the optional console log.
+4. Follow the pop-up prompts to survive the purge and escape the Evil AI!
 
 ---
 
 ## 🛠️ Project Structure
-- `index.html`: The HTML wrapper that loads the game script and instructs players on opening the console.
+- `index.html`: A blank HTML wrapper that loads the game script.
 - `game.js`: Contains all core game logic, state handlers, room loops, and conditional routing.
